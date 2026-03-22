@@ -1,24 +1,36 @@
-#include <iostream>
 #include <algorithm>
-#include <vector>
+#include <iostream>
 #include <string>
+#include <vector>
 
 int height = 9;
 int width = 7;
 
-void PrintMatrix(const std::vector<std::vector<int>>& matrix, int start_x, int start_y, int end_x, int end_y) {
+void PrintSymLine(void) {
+  std::cout << '+';
+  for (size_t i = 0; i < width; ++i) std::cout << '-';
+  std::cout << "+\n";
+}
+
+void PrintMatrix(const std::vector<std::vector<int>>& matrix, int start_x,
+                 int start_y, int end_x, int end_y) {
   const std::string symbols = " .o+=*BOX@%&#/^";
+  PrintSymLine();
   for (size_t y = 0; y < height; ++y) {
+    std::cout << '|';
     for (size_t x = 0; x < width; ++x) {
-      if (x == start_x && y == start_y) std::cout << " S ";
-      else if (x == end_x && y == end_y) std::cout << " E ";
+      if (x == start_x && y == start_y)
+        std::cout << "S";
+      else if (x == end_x && y == end_y)
+        std::cout << "E";
       else {
         char sym = std::min(matrix[y][x], 14);
-        std::cout << ' ' << symbols[sym] << ' ';
+        std::cout << symbols[sym];
       }
     }
-    std::cout << std::endl;
+    std::cout << '|' << std::endl;
   }
+  PrintSymLine();
 }
 
 int main(void) {
