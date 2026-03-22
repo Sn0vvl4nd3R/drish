@@ -1,10 +1,23 @@
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
 
-int height = 9;
-int width = 7;
+const size_t offset = 0xcbf29ce484222325;
+const size_t prime = 0x100000001b3;
+
+const int height = 9;
+const int width = 7;
+
+uint64_t fnv(std::string str) {
+  uint64_t hash = offset;
+  for (const char& byte : str) {
+    hash ^= byte;
+    hash *= prime;
+  }
+  return hash;
+}
 
 void PrintSymLine(void) {
   std::cout << '+';
@@ -12,8 +25,8 @@ void PrintSymLine(void) {
   std::cout << "+\n";
 }
 
-void PrintMatrix(const std::vector<std::vector<int>>& matrix, int start_x,
-                 int start_y, int end_x, int end_y) {
+void PrintMatrix(const std::vector<std::vector<int>>& matrix, size_t start_x,
+                 size_t start_y, size_t end_x, size_t end_y) {
   const std::string symbols = " .o+=*BOX@%&#/^";
   PrintSymLine();
   for (size_t y = 0; y < height; ++y) {
@@ -39,44 +52,43 @@ int main(void) {
   int y = height / 2;
 
   std::string str("Hello, World!");
+  uint64_t hash = fnv(str);
 
-  for (char c : str) {
-    for (size_t i = 0; i < 4; ++i) {
-      int bit = c & 3;
-      c >>= 2;
+  for (size_t i = 0; i < 32; ++i) {
+    int bit = hash & 3;
+    hash >>= 2;
 
-      switch (bit) {
-        case (0):
-          --x;
-          --y;
-          break;
-        case (1):
-          ++x;
-          --y;
-          break;
-        case (2):
-          --x;
-          ++y;
-          break;
-        case (3):
-          ++x;
-          ++y;
-          break;
-      }
-
-      if (x < 0) {
-        ++x;
-      } else if (x > width - 1) {
+    switch (bit) {
+      case (0):
         --x;
-      }
-      if (y < 0) {
-        ++y;
-      } else if (y > height - 1) {
         --y;
-      }
-
-      vec[y][x]++;
+        break;
+      case (1):
+        ++x;
+        --y;
+        break;
+      case (2):
+        --x;
+        ++y;
+        break;
+      case (3):
+        ++x;
+        ++y;
+        break;
     }
+
+    if (x < 0) {
+      ++x;
+    } else if (x > width - 1) {
+      --x;
+    }
+    if (y < 0) {
+      ++y;
+    } else if (y > height - 1) {
+      --y;
+    }
+
+    vec[y][x]++;
   }
   PrintMatrix(vec, width / 2, height / 2, x, y);
   return 0;
