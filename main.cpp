@@ -3,105 +3,130 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <utility>
 
 const uint64_t offset = 0xcbf29ce484222325;
 const uint64_t prime = 0x100000001b3;
 
-int height = 0;
-int width = 0;
+class DrunkenBishop {
+ private:
+  int height_;
+  int width_;
+  std::pair<int, int> start_;
+  std::pair<int, int> end_;
+  std::vector<std::vector<int>> vec_;
+  std::string str_;
 
-uint64_t fnv(const std::string& str) {
-  uint64_t hash = offset;
-  for (const char& byte : str) {
-    hash ^= byte;
-    hash *= prime;
+  void PrintSymLine(void) {
+    std::cout << '+';
+    for (int i = 0; i < width_; ++i) std::cout << '-';
+    std::cout << "+\n";
   }
-  return hash;
-}
 
-void PrintSymLine(void) {
-  std::cout << '+';
-  for (int i = 0; i < width; ++i) std::cout << '-';
-  std::cout << "+\n";
-}
+  uint64_t FNV(std::string iter) {
+    std::string iter_string = str_ + iter;
+    uint64_t hash = offset;
+    for (const char& byte : iter_string) {
+      hash ^= byte;
+      hash *= prime;
+    }
+    return hash;
+  }
 
-void PrintMatrix(const std::vector<std::vector<int>>& matrix, int start_x,
-                 int start_y, int end_x, int end_y) {
-  const std::string symbols = " .o+=*BOX@%&#/^";
-  PrintSymLine();
-  for (int y = 0; y < height; ++y) {
-    std::cout << '|';
-    for (int x = 0; x < width; ++x) {
-      if (x == start_x && y == start_y)
-        std::cout << "S";
-      else if (x == end_x && y == end_y)
-        std::cout << "E";
-      else {
-        char sym = std::min(matrix[y][x], 14);
-        std::cout << symbols[sym];
+  void Process(void) {
+    int total_steps = width_ * height_;
+    int steps_done = 0;
+    int iter = 0;
+    while (steps_done < total_steps) {
+      uint64_t hash = FNV(std::to_string(iter));
+      iter++;
+      for (size_t i = 0; i < 32 && steps_done < total_steps; ++i) {
+        int bit = hash & 3;
+        hash >>= 2;
+        steps_done++;
+
+        switch (bit) {
+          case (0):
+            --end_.first;
+            --end_.second;
+            break;
+          case (1):
+            ++end_.first;
+            --end_.second;
+            break;
+          case (2):
+            --end_.first;
+            ++end_.second;
+            break;
+          case (3):
+            ++end_.first;
+            ++end_.second;
+            break;
+        }
+
+        if (end_.first < 0) {
+          ++end_.first;
+        } else if (end_.first > width_ - 1) {
+          --end_.first;
+        }
+        if (end_.second < 0) {
+          ++end_.second;
+        } else if (end_.second > height_ - 1) {
+          --end_.second;
+        }
+
+        vec_[end_.second][end_.first]++;
       }
     }
-    std::cout << '|' << std::endl;
   }
-  PrintSymLine();
-}
+
+ public:
+  DrunkenBishop(int height, int width, std::string str)
+      : height_(height),
+        width_(width),
+        vec_(height_, std::vector<int>(width, 0)),
+        str_(str) {
+          start_.first = width_ / 2;
+          start_.second = height_ / 2;
+          end_ = start_;
+        }
+
+  void Print(void) {
+    Process();
+    const std::string symbols = " .o+=*BOX@%&#/^";
+    PrintSymLine();
+    for (int y = 0; y < height_; ++y) {
+      std::cout << '|';
+      for (int x = 0; x < width_; ++x) {
+        if (x == start_.first && y == start_.second)
+          std::cout << "S";
+        else if (x == end_.first && y == end_.second)
+          std::cout << "E";
+        else {
+          int len = symbols.length() - 1;
+          char sym = std::min(vec_[y][x], len);
+          std::cout << symbols[sym];
+        }
+      }
+      std::cout << '|' << std::endl;
+    }
+    PrintSymLine();
+  }
+};
 
 int main(void) {
+  int h = 0;
+  int w = 0;
   std::cout << "Enter the height & width:\n";
-  std::cin >> height >> width;
-
-  std::vector<std::vector<int>> vec(height, std::vector<int>(width, 0));
-  int x = width / 2;
-  int y = height / 2;
+  std::cin >> h >> w;
 
   std::cout << "Enter your string:\n";
   std::string str;
   std::getline(std::cin >> std::ws, str);
 
-  int total_steps = width * height;
-  int steps_done = 0;
-  int iter = 0;
-  while (steps_done < total_steps) {
-    uint64_t hash = fnv(str + std::to_string(iter));
-    iter++;
-    for (size_t i = 0; i < 32 && steps_done < total_steps; ++i) {
-      int bit = hash & 3;
-      hash >>= 2;
-      steps_done++;
+  DrunkenBishop bishop(h, w, str);
 
-      switch (bit) {
-        case (0):
-          --x;
-          --y;
-          break;
-        case (1):
-          ++x;
-          --y;
-          break;
-        case (2):
-          --x;
-          ++y;
-          break;
-        case (3):
-          ++x;
-          ++y;
-          break;
-      }
+  bishop.Print();
 
-      if (x < 0) {
-        ++x;
-      } else if (x > width - 1) {
-        --x;
-      }
-      if (y < 0) {
-        ++y;
-      } else if (y > height - 1) {
-        --y;
-      }
-
-      vec[y][x]++;
-    }
-  }
-  PrintMatrix(vec, width / 2, height / 2, x, y);
   return 0;
 }
