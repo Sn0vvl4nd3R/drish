@@ -5,8 +5,8 @@
 #include <vector>
 #include <utility>
 
-const uint64_t offset = 0xcbf29ce484222325;
-const uint64_t prime = 0x100000001b3;
+constexpr uint64_t offset = 0xcbf29ce484222325;
+constexpr uint64_t prime = 0x100000001b3;
 
 class DrunkenBishop {
  private:
@@ -18,13 +18,13 @@ class DrunkenBishop {
   std::string str_;
   uint64_t base_hash_;
 
-  void PrintSymLine(void) {
+  void PrintSymLine(void) const {
     std::cout << '+';
     for (int i = 0; i < width_; ++i) std::cout << '-';
     std::cout << "+\n";
   }
 
-  uint64_t FNVBase(const std::string& str) {
+  uint64_t FNVBase(const std::string& str) const {
     uint64_t hash = offset;
     for (const char& byte : str) {
       hash ^= static_cast<uint8_t>(byte);
@@ -33,7 +33,7 @@ class DrunkenBishop {
     return hash;
   }
 
-  uint64_t FNV(uint64_t base_hash, const std::string& iter_str) {
+  uint64_t FNV(uint64_t base_hash, const std::string& iter_str) const {
     uint64_t hash = base_hash;
     for (char byte : iter_str) {
       hash ^= static_cast<uint8_t>(byte);
@@ -43,6 +43,16 @@ class DrunkenBishop {
   }
 
  public:
+  DrunkenBishop(int height, int width, const std::string& str)
+    : height_(height),
+    width_(width),
+    vec_(height_ * width_, 0),
+    str_(str) {
+      start_ = {width_ / 2, height_ / 2};
+      end_ = start_;
+      base_hash_ = FNVBase(str_);
+    }
+
   void Process(void) {
     int total_steps = width_ * height_;
     int steps_done = 0;
@@ -90,18 +100,7 @@ class DrunkenBishop {
     }
   }
 
-  DrunkenBishop(int height, int width, std::string str)
-      : height_(height),
-        width_(width),
-        vec_(height_ * width_, 0),
-        str_(str) {
-          start_.first = width_ / 2;
-          start_.second = height_ / 2;
-          end_ = start_;
-          base_hash_ = FNVBase(str_);
-        }
-
-  void Print(void) {
+  void Print(void) const {
     const std::string symbols = " .o+=*BOX@%&#/^";
     PrintSymLine();
     for (int y = 0; y < height_; ++y) {
@@ -113,8 +112,8 @@ class DrunkenBishop {
           std::cout << "E";
         else {
           int len = symbols.length() - 1;
-          char sym = std::min(vec_[y * width_ + x], len);
-          std::cout << symbols[sym];
+          int idx = std::min(vec_[y * width_ + x], len);
+          std::cout << symbols[idx];
         }
       }
       std::cout << "|\n";
